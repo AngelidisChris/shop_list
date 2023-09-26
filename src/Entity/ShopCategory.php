@@ -16,10 +16,6 @@ class ShopCategory
     #[ORM\Column(length: 64, unique: true)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'shopCategory')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Shop $shop = null;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -33,18 +29,6 @@ class ShopCategory
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getShop(): ?Shop
-    {
-        return $this->shop;
-    }
-
-    public function setShop(?Shop $shop): static
-    {
-        $this->shop = $shop;
 
         return $this;
     }

@@ -7,8 +7,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: ShopRepository::class)]
+#[UniqueEntity(fields: ['name'], message: 'There is already a shop with this name')]
 class Shop
 {
     #[ORM\Id]
@@ -23,8 +27,8 @@ class Shop
     #[ORM\JoinColumn(nullable: false)]
     private ?ShopOwner $shopOwner = null;
 
-    #[ORM\OneToMany(mappedBy: 'shop', targetEntity: ShopCategory::class)]
-    private Collection $shopCategory;
+    #[ORM\ManyToOne(targetEntity: ShopCategory::class)]
+    private ShopCategory $shopCategory;
 
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
@@ -40,7 +44,6 @@ class Shop
 
     public function __construct()
     {
-        $this->shopCategory = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -72,34 +75,14 @@ class Shop
         return $this;
     }
 
-    /**
-     * @return Collection<int, ShopCategory>
-     */
-    public function getShopCategory(): Collection
+    public function getShopCategory(): ?ShopCategory
     {
         return $this->shopCategory;
     }
 
-    public function addShopCategory(ShopCategory $shopCategory): static
+    public function setShopCategory(?ShopCategory $shopCategory): void
     {
-        if (!$this->shopCategory->contains($shopCategory)) {
-            $this->shopCategory->add($shopCategory);
-            $shopCategory->setShop($this);
-        }
-
-        return $this;
-    }
-
-    public function removeShopCategory(ShopCategory $shopCategory): static
-    {
-        if ($this->shopCategory->removeElement($shopCategory)) {
-            // set the owning side to null (unless already changed)
-            if ($shopCategory->getShop() === $this) {
-                $shopCategory->setShop(null);
-            }
-        }
-
-        return $this;
+        $this->shopCategory = $shopCategory;
     }
 
     public function getDescription(): ?string
