@@ -6,10 +6,15 @@ use App\Repository\ShopOwnerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use JetBrains\PhpStorm\Pure;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\PasswordStrength;
 
 #[ORM\Entity(repositoryClass: ShopOwnerRepository::class)]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -17,11 +22,21 @@ class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Assert\Email]
+    #[Assert\NotNull]
+    #[Assert\Length(["max" => 180])]
     #[ORM\Column(length: 180, unique: true)]
     private ?string $email = null;
 
     #[ORM\Column]
     private array $roles = [];
+
+    #[Assert\PasswordStrength([
+        'minScore' => PasswordStrength::STRENGTH_WEAK,
+        'message' => 'Your password is too easy to guess. Try a 10 character long password with at least one symbol, letter and number'
+    ])]
+    #[Assert\NotNull]
+    private ?string $rawPassword;
 
     /**
      * @var string|null The hashed password
@@ -29,12 +44,16 @@ class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
     #[ORM\Column(length: 64)]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'shopOwner', targetEntity: Shop::class, orphanRemoval: true)]
     private Collection $shops;
 
+    #[Pure]
     public function __construct()
     {
         $this->shops = new ArrayCollection();
@@ -50,7 +69,7 @@ class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(?string $email): static
     {
         $this->email = $email;
 
@@ -65,6 +84,24 @@ class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getRawPassword(): string
+    {
+        return $this->rawPassword;
+    }
+
+
+    /**
+     * @param string|null $rawPassword
+     */
+    public function setRawPassword(?string $rawPassword): void
+    {
+        $this->rawPassword = $rawPassword;
     }
 
     /**
@@ -115,7 +152,7 @@ class ShopOwner implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): static
     {
         $this->name = $name;
 
