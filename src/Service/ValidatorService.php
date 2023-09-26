@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Component\Validator\ConstraintViolationList;
 
 class ValidatorService

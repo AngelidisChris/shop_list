@@ -2,51 +2,42 @@
 
 namespace App\Controller;
 
-use App\Entity\ShopOwner;
-use App\Form\RegistrationFormType;
-use App\Service\UserService;
-use App\Service\ValidatorService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Dto\CreateShopOwnerDTO;
+use App\Service\ShopOwnerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Routing\Exception\InvalidArgumentException;
 
 class RegistrationController extends AbstractController
 {
-    #[Route('/register', name: 'user_register', methods: ["POST"])]
-    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
+    private ShopOwnerService $shopOwnerService;
+
+    /**
+     * @param ShopOwnerService $shopOwnerService
+     */
+    public function __construct(ShopOwnerService $shopOwnerService)
     {
-        $user = new ShopOwner();
-        $user->setEmail($request->getPayload()->get("email"));
-        $user->setRawPassword($request->getPayload()->get("password"));
-        $user->setName($request->getPayload()->get("name"));
-        $user->setRoles(["ROLE_SHOP_OWNER"]);
+        $this->shopOwnerService = $shopOwnerService;
+    }
 
-        $errors = $validator->validate($user);
 
-        if ($errors->count() > 0){
+    #[Route('/register', name: 'user_register', methods: ["POST"])]
+    public function register(#[MapRequestPayload] CreateShopOwnerDTO $shopOwnerDTO): JsonResponse
+    {
+
+        try {
+            $shopOwner = $this->shopOwnerService->createShopOwner($shopOwnerDTO);
+        } catch (InvalidArgumentException $e) {
+            if ($errors = json_decode($e->getMessage(), true)){
+                return new JsonResponse($errors,$e->getCode());
+            }
             return new JsonResponse([
-                "errors" => ValidatorService::buildErrorArray($errors)
-            ],422);
+                "errors" => $e->getMessage()
+            ],$e->getCode());
         }
 
-        // encode the plain password
-        $user->setPassword(
-            $userPasswordHasher->hashPassword(
-                $user,
-                $request->getPayload()->get("password")
-            )
-        );
-
-
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        return new JsonResponse(["id" => $user->getId()], 201);
-
+        return new JsonResponse(["id" => $shopOwner->getId()], 201);
     }
 }
