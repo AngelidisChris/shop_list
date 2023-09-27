@@ -10,6 +10,8 @@ use App\Repository\ShopCategoryRepository;
 use App\Repository\ShopOwnerRepository;
 use App\Repository\ShopRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\Pagination\PaginationInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\Routing\Exception\InvalidArgumentException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -21,6 +23,7 @@ class ShopService
     private ShopCategoryRepository $shopCategoryRepository;
     private EntityManagerInterface $entityManager;
     private ValidatorInterface $validator;
+    private PaginatorInterface $paginator;
 
     /**
      * @param ShopRepository $shopRepository
@@ -28,16 +31,37 @@ class ShopService
      * @param ShopCategoryRepository $shopCategoryRepository
      * @param EntityManagerInterface $entityManager
      * @param ValidatorInterface $validator
+     * @param PaginatorInterface $paginator
      */
-    public function __construct(ShopRepository $shopRepository, ShopOwnerService $shopOwnerService, ShopCategoryRepository $shopCategoryRepository, EntityManagerInterface $entityManager, ValidatorInterface $validator)
+    public function __construct( ShopRepository         $shopRepository,
+                                 ShopOwnerService       $shopOwnerService,
+                                 ShopCategoryRepository $shopCategoryRepository,
+                                 EntityManagerInterface $entityManager,
+                                 ValidatorInterface     $validator,
+                                 PaginatorInterface     $paginator)
     {
         $this->shopRepository = $shopRepository;
         $this->shopOwnerService = $shopOwnerService;
         $this->shopCategoryRepository = $shopCategoryRepository;
         $this->entityManager = $entityManager;
         $this->validator = $validator;
+        $this->paginator = $paginator;
     }
 
+
+    /**
+     * @param int $page
+     * @param int|null $range
+     * @param array|null $shopOwnerIds
+     * @param array|null $shopCategoryIds
+     * @param string|null $city
+     * @return PaginationInterface
+     */
+    public function indexShops(int $page, int $range = null, array $shopOwnerIds = null, array $shopCategoryIds = null, ?string $city = null): PaginationInterface
+    {
+        $filteredShops = $this->shopRepository->findByFilters($shopOwnerIds, $shopCategoryIds, $city);
+        return $this->paginator->paginate($filteredShops, $page, $range);
+    }
 
     public function createShop(ShopDTO $shopDTO): Shop
     {

@@ -3,11 +3,12 @@
 namespace App\Controller;
 
 use App\Dto\ShopDTO;
-use App\Service\JsonSerializerService;
+use App\Service\SerializerService;
 use App\Service\ShopService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Exception\InvalidArgumentException;
@@ -16,16 +17,39 @@ use Symfony\Component\Routing\Exception\InvalidArgumentException;
 class ShopController extends AbstractController
 {
     private ShopService $shopService;
-    private JsonSerializerService $jsonSerializerService;
+    private SerializerService $jsonSerializerService;
 
     /**
      * @param ShopService $shopService
-     * @param JsonSerializerService $jsonSerializerService
+     * @param SerializerService $jsonSerializerService
      */
-    public function __construct(ShopService $shopService, JsonSerializerService $jsonSerializerService)
+    public function __construct( ShopService $shopService, SerializerService $jsonSerializerService)
     {
         $this->shopService = $shopService;
         $this->jsonSerializerService = $jsonSerializerService;
+    }
+
+    #[Route('', name: 'index_shop', methods: ["GET"])]
+    public function index(
+        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopOwners,
+        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopCategories,
+        #[MapQueryParameter] ?string $city,
+        #[MapQueryParameter] ?int $range,
+        #[MapQueryParameter] int $page = 1,
+    ): JsonResponse
+    {
+
+        if (in_array("ROLE_SHOP_OWNER",$this->getUser()->getRoles(), true)){
+            $shopOwners = [$this->getUser()->getId()];
+        }
+        $pagination = $this->shopService->indexShops($page, $range, $shopOwners, $shopCategories, $city);
+
+        $filteredShops = [
+            'data' => $pagination->getItems(),
+            'meta' => $pagination->getPaginationData()
+        ];
+
+        return new JsonResponse($this->jsonSerializerService->serialize($filteredShops, ["show_shop"]));
     }
 
     #[Route('', name: 'create_shop', methods: ["POST"])]

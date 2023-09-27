@@ -4,9 +4,8 @@ namespace App\Service;
 
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
 
-class JsonSerializerService
+class SerializerService
 {
     private SerializerInterface $serializer;
 
@@ -18,7 +17,7 @@ class JsonSerializerService
         $this->serializer = $serializer;
     }
 
-    public function serialize(object $items, array $groups = null): object
+    public function serialize(mixed $items, array $groups = null, string $format = 'json'): object
     {
         $context = new SerializationContext();
         $context->setSerializeNull(true);
@@ -26,6 +25,6 @@ class JsonSerializerService
             $context->setGroups($groups);
         }
 
-        return json_decode($this->serializer->serialize($items, JsonEncoder::FORMAT, $context));
+        return json_decode($this->serializer->serialize($items, $format, $context));
     }
 }

@@ -28,6 +28,7 @@ class Shop
     #[ORM\Column(length: 64, unique: true)]
     private ?string $name = null;
 
+    #[Groups(["show_shop"])]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?ShopOwner $shopOwner = null;
