@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Dto\CreateShopOwnerDTO;
+use App\Dto\ShopOwnerDTO;
 use App\Service\ShopOwnerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,18 +24,13 @@ class RegistrationController extends AbstractController
 
 
     #[Route('/register', name: 'user_register', methods: ["POST"])]
-    public function register(#[MapRequestPayload] CreateShopOwnerDTO $shopOwnerDTO): JsonResponse
+    public function register(#[MapRequestPayload] ShopOwnerDTO $shopOwnerDTO): JsonResponse
     {
 
         try {
-            $shopOwner = $this->shopOwnerService->createShopOwner($shopOwnerDTO);
+            $shopOwner = $this->shopOwnerService->create($shopOwnerDTO);
         } catch (InvalidArgumentException $e) {
-            if ($errors = json_decode($e->getMessage(), true)){
-                return new JsonResponse($errors,$e->getCode());
-            }
-            return new JsonResponse([
-                "errors" => $e->getMessage()
-            ],$e->getCode());
+            return new JsonResponse(json_decode($e->getMessage(), true), $e->getCode());
         }
 
         return new JsonResponse(["id" => $shopOwner->getId()], 201);

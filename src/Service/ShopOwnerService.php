@@ -2,57 +2,49 @@
 
 namespace App\Service;
 
-use App\Dto\CreateShopOwnerDTO;
+use App\Dto\ShopOwnerDTO;
 use App\Entity\ShopOwner;
-use App\Repository\ShopOwnerRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Exception\InvalidArgumentException;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ShopOwnerService
 {
-    private ShopOwnerRepository $shopOwnerRepository;
     private EntityManagerInterface $entityManager;
     private UserPasswordHasherInterface $userPasswordHasher;
     private ValidatorInterface $validator;
+    private Security $security;
 
     /**
-     * @param ShopOwnerRepository $shopOwnerRepository
      * @param EntityManagerInterface $entityManager
      * @param UserPasswordHasherInterface $userPasswordHasher
      * @param ValidatorInterface $validator
+     * @param Security $security
      */
-    public function __construct(ShopOwnerRepository $shopOwnerRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasher, ValidatorInterface $validator)
+    public function __construct(EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasher, ValidatorInterface $validator, Security $security)
     {
-        $this->shopOwnerRepository = $shopOwnerRepository;
         $this->entityManager = $entityManager;
         $this->userPasswordHasher = $userPasswordHasher;
         $this->validator = $validator;
+        $this->security = $security;
     }
 
     /**
-     * @param CreateShopOwnerDTO $shopOwnerDTO
-     * @throws InvalidArgumentException
+     * @param ShopOwnerDTO $shopOwnerDTO
      * @return ShopOwner
+     *@throws InvalidArgumentException
      */
-    public function createShopOwner(CreateShopOwnerDTO $shopOwnerDTO): ShopOwner {
+    public function create(ShopOwnerDTO $shopOwnerDTO): ShopOwner {
+        $shopOwner = new ShopOwner();
+        $shopOwner->setEmail($shopOwnerDTO->email);
+        $shopOwner->setName($shopOwnerDTO->name);
+        $shopOwner->setRawPassword($shopOwnerDTO->password);
+        $shopOwner->setRoles(["ROLE_SHOP_OWNER"]);
 
-        $existingShopOwner = $this->getShopOwnerByEmail($shopOwnerDTO->email);
-
-        if ($existingShopOwner !== null){
-            throw new InvalidArgumentException(
-                "Shop owner with email {$shopOwnerDTO->email} already exist!",
-                400);
-        }
-
-        $user = new ShopOwner();
-        $user->setEmail($shopOwnerDTO->email);
-        $user->setName($shopOwnerDTO->name);
-        $user->setRawPassword($shopOwnerDTO->password);
-        $user->setRoles(["ROLE_SHOP_OWNER"]);
-
-        $errors = $this->validator->validate($user);
+        $errors = $this->validator->validate($shopOwner);
         if ($errors->count() > 0){
             throw new InvalidArgumentException(
                 json_encode([
@@ -63,24 +55,20 @@ class ShopOwnerService
         }
 
         // encode the plain password
-        $user->setPassword(
+        $shopOwner->setPassword(
             $this->userPasswordHasher->hashPassword(
-                $user,
+                $shopOwner,
                 $shopOwnerDTO->password
             )
         );
 
-        $this->entityManager->persist($user);
+        $this->entityManager->persist($shopOwner);
         $this->entityManager->flush();
 
-        return $user;
+        return $shopOwner;
     }
 
-    public function getShopOwnerByEmail(string $email): ?ShopOwner
-    {
-        return $this->shopOwnerRepository->findOneBy(
-            ["email" => $email]
-        );
+    public function getCurrent(): ?UserInterface {
+        return $this->security->getUser();
     }
-
 }

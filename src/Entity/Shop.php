@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\ShopRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -20,25 +18,40 @@ class Shop
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 64)]
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
+    #[ORM\Column(length: 64, unique: true)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'shops')]
+
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?ShopOwner $shopOwner = null;
 
-    #[ORM\ManyToOne(targetEntity: ShopCategory::class)]
-    private ShopCategory $shopCategory;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ShopCategory $shopCategory = null;
 
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 1000])]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
     #[ORM\Column(length: 64)]
     private ?string $openHours = null;
 
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
     #[ORM\Column(length: 64)]
     private ?string $city = null;
 
+    #[Assert\Length(["min" => 0, "max" => 64])]
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $address = null;
 
