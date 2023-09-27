@@ -12,10 +12,10 @@ security:
                 property: email
     firewalls:
         login:
-            pattern: ^/api/login
+            pattern: ^/api/shop-owners/login
             stateless: true
             json_login:
-                check_path: /api/login
+                check_path: /api/shop-owners/login
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
@@ -25,11 +25,12 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api/register, roles: PUBLIC_ACCESS }
-        - { path: ^/api/shops, roles: ROLE_SHOP_OWNER, methods: [POST] }
+        - { path: ^/api/shop-owners/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/shop-owners, roles: PUBLIC_ACCESS, methods: [POST]  }
+        - { path: ^/api/shops, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/shops/[0-9]+, allow_if: "not is_granted('ROLE_SHOP_OWNER')", methods: [GET] }
-        - { path: ^/api/shops/[0-9]+, roles: ROLE_SHOP_OWNER", methods: [PUT] }
+        - { path: ^/api/shops, roles: ROLE_SHOP_OWNER, methods: [POST] }
+        - { path: ^/api/shops/[0-9]+, roles: ROLE_SHOP_OWNER, methods: [PUT] }
         - { path: ^/api/shops/[0-9]+, roles: ROLE_SHOP_OWNER, methods: [DELETE] }
 
 when@test:

@@ -31,18 +31,18 @@ class ShopController extends AbstractController
 
     #[Route('', name: 'index_shop', methods: ["GET"])]
     public function index(
-        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopOwners,
-        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopCategories,
+        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopOwnerIds,
+        #[MapQueryParameter(filter: FILTER_VALIDATE_INT)] ?array $shopCategoryIds,
         #[MapQueryParameter] ?string $city,
         #[MapQueryParameter] ?int $range,
         #[MapQueryParameter] int $page = 1,
     ): JsonResponse
     {
-
-        if (in_array("ROLE_SHOP_OWNER",$this->getUser()->getRoles(), true)){
-            $shopOwners = [$this->getUser()->getId()];
+        if ($this->getUser() !== null && in_array("ROLE_SHOP_OWNER",$this->getUser()->getRoles(), true)){
+            $shopOwnerIds = [$this->getUser()->getId()];
         }
-        $pagination = $this->shopService->indexShops($page, $range, $shopOwners, $shopCategories, $city);
+
+        $pagination = $this->shopService->indexShops($page, $range, $shopOwnerIds, $shopCategoryIds, $city);
 
         $filteredShops = [
             'data' => $pagination->getItems(),

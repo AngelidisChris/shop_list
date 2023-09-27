@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 
 #[ORM\Entity(repositoryClass: ShopRepository::class)]
+#[ORM\Index(columns: ["shop_owner_id", "shop_category_id", "city"], name: "shop_owner_shop_category_city_idx")]
 #[UniqueEntity(fields: ['name'], message: 'There is already a shop with this name')]
 class Shop
 {
@@ -29,7 +30,7 @@ class Shop
     private ?string $name = null;
 
     #[Groups(["show_shop"])]
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: "shops")]
     #[ORM\JoinColumn(nullable: false)]
     private ?ShopOwner $shopOwner = null;
 
