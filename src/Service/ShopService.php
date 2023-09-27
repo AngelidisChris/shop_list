@@ -4,15 +4,11 @@ namespace App\Service;
 
 use App\Dto\ShopDTO;
 use App\Entity\Shop;
-use App\Entity\ShopCategory;
-use App\Entity\ShopOwner;
 use App\Repository\ShopCategoryRepository;
-use App\Repository\ShopOwnerRepository;
 use App\Repository\ShopRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\Pagination\PaginationInterface;
 use Knp\Component\Pager\PaginatorInterface;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\Routing\Exception\InvalidArgumentException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
