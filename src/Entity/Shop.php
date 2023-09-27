@@ -7,6 +7,7 @@ use App\Repository\ShopRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
+use Spatie\OpeningHours\OpeningHours;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -49,8 +50,8 @@ class Shop
     #[Groups(["show_shop", "update_shop"])]
     #[Assert\NotNull]
     #[Assert\NotBlank]
-    #[Assert\Length(["max" => 64])]
-    #[ORM\Column(length: 64)]
+    #[Assert\Json]
+    #[ORM\Column(type:"json", length: 64)]
     private ?string $openHours = null;
 
     #[Groups(["show_shop", "update_shop"])]
@@ -71,7 +72,7 @@ class Shop
         $this->setAddress($shopDTO->address);
         $this->setCity($shopDTO->city);
         $this->setDescription($shopDTO->description);
-        $this->setOpenHours($shopDTO->openHours);
+        $this->setOpenHours(json_encode($shopDTO->openHours));
         $this->setShopCategory($shopCategory);
         $this->setShopOwner($shopOwner);
     }
@@ -86,7 +87,7 @@ class Shop
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): static
     {
         $this->name = $name;
 
@@ -120,7 +121,7 @@ class Shop
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -132,7 +133,7 @@ class Shop
         return $this->openHours;
     }
 
-    public function setOpenHours(string $openHours): static
+    public function setOpenHours(?string $openHours): static
     {
         $this->openHours = $openHours;
 
@@ -144,7 +145,7 @@ class Shop
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 

@@ -10,7 +10,7 @@ class ShopDTO
         public readonly ?string $name,
         public readonly ?ShopCategoryDTO $shopCategory,
         public readonly ?string $description,
-        public readonly ?string $openHours,
+        public readonly ?array $openHours,
         public readonly ?string $city,
         public readonly ?string $address,
     ) {
