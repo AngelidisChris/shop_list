@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Dto\ShopDTO;
 use App\Entity\Shop;
 use App\Entity\ShopCategory;
+use App\Entity\ShopOwner;
 use App\Repository\ShopCategoryRepository;
 use App\Repository\ShopOwnerRepository;
 use App\Repository\ShopRepository;
@@ -45,14 +46,7 @@ class ShopService
             throw new InvalidArgumentException("Shop category with id {$shopDTO->shopCategory->id} does not exist!", 400);
         }
 
-        $shop = new Shop();
-        $shop->setName($shopDTO->name);
-        $shop->setAddress($shopDTO->address);
-        $shop->setCity($shopDTO->city);
-        $shop->setDescription($shopDTO->description);
-        $shop->setOpenHours($shopDTO->openHours);
-        $shop->setShopCategory($shopCategory);
-        $shop->setShopOwner($this->shopOwnerService->getCurrent());
+        $shop = new Shop($shopDTO, $this->shopOwnerService->getCurrent(), $shopCategory);
 
         $errors = $this->validator->validate($shop);
         if ($errors->count() > 0){
@@ -68,5 +62,62 @@ class ShopService
         $this->entityManager->flush();
 
         return $shop;
+    }
+
+    public function showShopById(int $id): Shop
+    {
+        $shop = $this->shopRepository->find(id: $id);
+        if ($shop === null){
+            throw new InvalidArgumentException("Shop with id {$id} does not exist!", 400);
+        }
+
+        return $shop;
+    }
+
+    public function updateShop(int $id, ShopDTO $shopDTO): Shop
+    {
+        $shop = $this->shopRepository->findOneBy([
+            "id" => $id,
+            "shopOwner" => $this->shopOwnerService->getCurrent()
+        ]);
+        if ($shop === null){
+            throw new InvalidArgumentException("Shop with id {$id} does not exist!", 400);
+        }
+
+        $updatedShopCategory = $shop->getShopCategory();
+        if ($shopDTO->shopCategory->id !== $shop->getShopCategory()->getId()){
+            $updatedShopCategory = $this->shopCategoryRepository->find(id: $shopDTO->shopCategory->id);
+            if ($updatedShopCategory === null){
+                throw new InvalidArgumentException("Shop category with id {$shopDTO->shopCategory->id} does not exist!", 400);
+            }
+        }
+
+        $errors = $this->validator->validate($shop);
+        if ($errors->count() > 0){
+            throw new InvalidArgumentException(
+                json_encode([
+                    "errors" => ValidatorService::buildErrorArray($errors)
+                ]),
+                422
+            );
+        }
+
+        $shop->updateShop($shopDTO, $updatedShopCategory);
+
+        return $shop;
+    }
+
+    public function deleteShop(int $id):void
+    {
+        $shop = $this->shopRepository->findOneBy([
+            "id" => $id,
+            "shopOwner" => $this->shopOwnerService->getCurrent()
+        ]);
+        if ($shop === null){
+            throw new InvalidArgumentException("Shop with id {$id} does not exist!", 400);
+        }
+
+        $this->entityManager->remove($shop);
+        $this->entityManager->flush();
     }
 }

@@ -27,7 +27,10 @@ security:
     access_control:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
-        - { path: ^/api,       roles: ROLE_SHOP_OWNER }
+        - { path: ^/api/shops, roles: ROLE_SHOP_OWNER, methods: [POST] }
+        - { path: ^/api/shops/[0-9]+, allow_if: "not is_granted('ROLE_SHOP_OWNER')", methods: [GET] }
+        - { path: ^/api/shops/[0-9]+, roles: ROLE_SHOP_OWNER", methods: [PUT] }
+        - { path: ^/api/shops/[0-9]+, roles: ROLE_SHOP_OWNER, methods: [DELETE] }
 
 when@test:
     security:
