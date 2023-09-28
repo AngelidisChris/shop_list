@@ -55,8 +55,31 @@ class ShopService
      */
     public function indexShops(int $page, int $range = null, array $shopOwnerIds = null, array $shopCategoryIds = null, ?string $city = null): PaginationInterface
     {
+        $currentUser = $this->shopOwnerService->getCurrent();
+        if ($currentUser !== null && in_array("ROLE_SHOP_OWNER", $currentUser->getRoles(), true)){
+            $shopOwnerIds = [$currentUser->getId()];
+        }
         $filteredShops = $this->shopRepository->findByFilters($shopOwnerIds, $shopCategoryIds, $city);
         return $this->paginator->paginate($filteredShops, $page, $range);
+    }
+
+    public function showShopById(int $id): Shop
+    {
+        $currentUser = $this->shopOwnerService->getCurrent();
+        if ($currentUser !== null && in_array("ROLE_SHOP_OWNER", $currentUser->getRoles(), true)){
+            $shop = $this->shopRepository->findOneBy([
+                "id" => $id,
+                "shopOwner" => $currentUser->getId()
+            ]);
+        }
+        else{
+            $shop = $this->shopRepository->find(id: $id);
+        }
+        if ($shop === null){
+            throw new InvalidArgumentException("Shop with id {$id} does not exist!", 400);
+        }
+
+        return $shop;
     }
 
     public function createShop(ShopDTO $shopDTO): Shop
@@ -80,16 +103,6 @@ class ShopService
 
         $this->entityManager->persist($shop);
         $this->entityManager->flush();
-
-        return $shop;
-    }
-
-    public function showShopById(int $id): Shop
-    {
-        $shop = $this->shopRepository->find(id: $id);
-        if ($shop === null){
-            throw new InvalidArgumentException("Shop with id {$id} does not exist!", 400);
-        }
 
         return $shop;
     }
@@ -123,6 +136,7 @@ class ShopService
         }
 
         $shop->updateShop($shopDTO, $updatedShopCategory);
+        $this->entityManager->flush();
 
         return $shop;
     }

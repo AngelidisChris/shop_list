@@ -23,8 +23,11 @@ class ShopOwnerController extends AbstractController
         $this->shopOwnerService = $shopOwnerService;
     }
 
+    #[Route('/login', name: 'login_shop_owner', methods: ["POST"])]
+    public function login(){}
+
     #[Route('', name: 'create_shop_owner', methods: ["POST"])]
-    public function createShopOwner(#[MapRequestPayload] ShopOwnerDTO $shopOwnerDTO): JsonResponse
+    public function create(#[MapRequestPayload] ShopOwnerDTO $shopOwnerDTO): JsonResponse
     {
         try {
             $shopOwner = $this->shopOwnerService->create($shopOwnerDTO);

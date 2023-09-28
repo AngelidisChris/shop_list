@@ -7,10 +7,8 @@ use App\Repository\ShopRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
-use Spatie\OpeningHours\OpeningHours;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
-
 
 #[ORM\Entity(repositoryClass: ShopRepository::class)]
 #[ORM\Index(columns: ["shop_owner_id", "shop_category_id", "city"], name: "shop_owner_shop_category_city_idx")]
@@ -51,7 +49,7 @@ class Shop
     #[Assert\NotNull]
     #[Assert\NotBlank]
     #[Assert\Json]
-    #[ORM\Column(type:"json", length: 64)]
+    #[ORM\Column(type:"json")]
     private ?string $openHours = null;
 
     #[Groups(["show_shop", "update_shop"])]
@@ -72,7 +70,7 @@ class Shop
         $this->setAddress($shopDTO->address);
         $this->setCity($shopDTO->city);
         $this->setDescription($shopDTO->description);
-        $this->setOpenHours(json_encode($shopDTO->openHours));
+        $this->setOpenHours($shopDTO->openHours);
         $this->setShopCategory($shopCategory);
         $this->setShopOwner($shopOwner);
     }

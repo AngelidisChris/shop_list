@@ -38,10 +38,6 @@ class ShopController extends AbstractController
         #[MapQueryParameter] int $page = 1,
     ): JsonResponse
     {
-        if ($this->getUser() !== null && in_array("ROLE_SHOP_OWNER",$this->getUser()->getRoles(), true)){
-            $shopOwnerIds = [$this->getUser()->getId()];
-        }
-
         $pagination = $this->shopService->indexShops($page, $range, $shopOwnerIds, $shopCategoryIds, $city);
 
         $filteredShops = [
@@ -52,8 +48,20 @@ class ShopController extends AbstractController
         return new JsonResponse($this->jsonSerializerService->serialize($filteredShops, ["show_shop"]));
     }
 
+    #[Route('/{id}', name: 'show_shop', requirements: ["id" => "\d+"], methods: ["GET"])]
+    public function show(int $id): Response
+    {
+        try{
+            $shop = $this->shopService->showShopById($id);
+        } catch (InvalidArgumentException $e) {
+            return new JsonResponse(["errors" => [$e->getMessage()]], $e->getCode());
+        }
+
+        return new JsonResponse($this->jsonSerializerService->serialize($shop, ["show_shop"]), 200);
+    }
+
     #[Route('', name: 'create_shop', methods: ["POST"])]
-    public function createShop(#[MapRequestPayload] ShopDTO $shopDTO): Response
+    public function create(#[MapRequestPayload] ShopDTO $shopDTO): Response
     {
         try{
             $shop = $this->shopService->createShop($shopDTO);
@@ -67,20 +75,8 @@ class ShopController extends AbstractController
         return new JsonResponse(["id" => $shop->getId()], 201);
     }
 
-    #[Route('/{id}', name: 'show_shop', requirements: ["id" => "\d+"], methods: ["GET"])]
-    public function showShop(int $id): Response
-    {
-        try{
-            $shop = $this->shopService->showShopById($id);
-        } catch (InvalidArgumentException $e) {
-            return new JsonResponse(["errors" => [$e->getMessage()]], $e->getCode());
-        }
-
-        return new JsonResponse($this->jsonSerializerService->serialize($shop, ["show_shop"]), 200);
-    }
-
     #[Route('/{id}', name: 'update_shop', requirements: ["id" => "\d+"], methods: ["PUT"])]
-    public function updateShop(#[MapRequestPayload] ShopDTO $shopDTO, int $id): Response
+    public function update(#[MapRequestPayload] ShopDTO $shopDTO, int $id): Response
     {
         try{
             $shop = $this->shopService->updateShop($id, $shopDTO);
@@ -95,7 +91,7 @@ class ShopController extends AbstractController
     }
 
     #[Route('/{id}', name: 'delete_shop', requirements: ["id" => "\d+"], methods: ["DELETE"])]
-    public function deleteShop(int $id): Response
+    public function delete(int $id): Response
     {
         try{
             $this->shopService->deleteShop($id);
