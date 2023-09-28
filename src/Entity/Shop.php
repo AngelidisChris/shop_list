@@ -2,45 +2,77 @@
 
 namespace App\Entity;
 
+use App\Dto\ShopDTO;
 use App\Repository\ShopRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ShopRepository::class)]
+#[ORM\Index(columns: ["shop_owner_id", "shop_category_id", "city"], name: "shop_owner_shop_category_city_idx")]
+#[UniqueEntity(fields: ['name'], message: 'There is already a shop with this name')]
 class Shop
 {
+    #[Groups(["show_shop", "update_shop"])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 64)]
+    #[Groups(["show_shop", "update_shop"])]
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
+    #[ORM\Column(length: 64, unique: true)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'shops')]
+    #[Groups(["show_shop"])]
+    #[ORM\ManyToOne(inversedBy: "shops")]
     #[ORM\JoinColumn(nullable: false)]
     private ?ShopOwner $shopOwner = null;
 
-    #[ORM\OneToMany(mappedBy: 'shop', targetEntity: ShopCategory::class)]
-    private Collection $shopCategory;
+    #[Groups(["show_shop", "update_shop"])]
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ShopCategory $shopCategory = null;
 
+    #[Groups(["show_shop", "update_shop"])]
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 1000])]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    #[ORM\Column(length: 64)]
+    #[Groups(["show_shop", "update_shop"])]
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Json]
+    #[ORM\Column(type:"json")]
     private ?string $openHours = null;
 
+    #[Groups(["show_shop", "update_shop"])]
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    #[Assert\Length(["max" => 64])]
     #[ORM\Column(length: 64)]
     private ?string $city = null;
 
+    #[Groups(["show_shop", "update_shop"])]
+    #[Assert\Length(["min" => 0, "max" => 64])]
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $address = null;
 
-    public function __construct()
+    public function __construct(ShopDTO $shopDTO, ShopOwner $shopOwner, ShopCategory $shopCategory)
     {
-        $this->shopCategory = new ArrayCollection();
+        $this->setName($shopDTO->name);
+        $this->setAddress($shopDTO->address);
+        $this->setCity($shopDTO->city);
+        $this->setDescription($shopDTO->description);
+        $this->setOpenHours($shopDTO->openHours);
+        $this->setShopCategory($shopCategory);
+        $this->setShopOwner($shopOwner);
     }
 
     public function getId(): ?int
@@ -53,7 +85,7 @@ class Shop
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): static
     {
         $this->name = $name;
 
@@ -72,34 +104,14 @@ class Shop
         return $this;
     }
 
-    /**
-     * @return Collection<int, ShopCategory>
-     */
-    public function getShopCategory(): Collection
+    public function getShopCategory(): ?ShopCategory
     {
         return $this->shopCategory;
     }
 
-    public function addShopCategory(ShopCategory $shopCategory): static
+    public function setShopCategory(?ShopCategory $shopCategory): void
     {
-        if (!$this->shopCategory->contains($shopCategory)) {
-            $this->shopCategory->add($shopCategory);
-            $shopCategory->setShop($this);
-        }
-
-        return $this;
-    }
-
-    public function removeShopCategory(ShopCategory $shopCategory): static
-    {
-        if ($this->shopCategory->removeElement($shopCategory)) {
-            // set the owning side to null (unless already changed)
-            if ($shopCategory->getShop() === $this) {
-                $shopCategory->setShop(null);
-            }
-        }
-
-        return $this;
+        $this->shopCategory = $shopCategory;
     }
 
     public function getDescription(): ?string
@@ -107,7 +119,7 @@ class Shop
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -119,7 +131,7 @@ class Shop
         return $this->openHours;
     }
 
-    public function setOpenHours(string $openHours): static
+    public function setOpenHours(?string $openHours): static
     {
         $this->openHours = $openHours;
 
@@ -131,7 +143,7 @@ class Shop
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
@@ -147,6 +159,17 @@ class Shop
     {
         $this->address = $address;
 
+        return $this;
+    }
+
+    public function updateShop(ShopDTO $shopDTO, ShopCategory $shopCategory): static
+    {
+        $this->setName($shopDTO->name);
+        $this->setAddress($shopDTO->address);
+        $this->setCity($shopDTO->city);
+        $this->setDescription($shopDTO->description);
+        $this->setOpenHours($shopDTO->openHours);
+        $this->setShopCategory($shopCategory);
         return $this;
     }
 }

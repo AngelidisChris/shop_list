@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Shop;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,20 +22,27 @@ class ShopRepository extends ServiceEntityRepository
         parent::__construct($registry, Shop::class);
     }
 
-//    /**
-//     * @return Shop[] Returns an array of Shop objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @return Query Returns an array of Shop objects
+     */
+    public function findByFilters(?array $shopOwnerIds, ?array $shopCategoryIds, ?string $city): Query
+    {
+        $qb = $this->createQueryBuilder('s');
+        if ($city){
+            $qb->andWhere('s.city like :city')
+                ->setParameter('city', "%".$city."%");
+        }
+        if($shopOwnerIds){
+            $qb->andWhere('s.shopOwner in (:shopOwnerIds)')
+                ->setParameter('shopOwnerIds', $shopOwnerIds);
+        }
+        if($shopCategoryIds){
+            $qb->andWhere('s.shopCategory in (:shopCategoryIds)')
+                ->setParameter('shopCategoryIds', $shopCategoryIds);
+        }
+        return $qb->orderBy('s.id', 'ASC')
+            ->getQuery();
+    }
 
 //    public function findOneBySomeField($value): ?Shop
 //    {
